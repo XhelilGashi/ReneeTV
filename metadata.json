@@ -1,0 +1,6 @@
+{
+  "name": "ReneeTV Live",
+  "description": "Professional, responsive live television streaming web application for authorized broadcasts, M3U/M3U8 playlists, and channel management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
