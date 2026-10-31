@@ -38,7 +38,24 @@ export class ApiService {
         }
       }
     } catch (err) {
-      console.warn('Backend unavailable, trying local fallback:', err);
+      console.warn('Backend /api/channels unavailable, trying local fallback:', err);
+    }
+
+    // Direct fallback for Vercel static deployment: /channels.json
+    try {
+      const staticRes = await fetch('/channels.json');
+      if (staticRes.ok) {
+        const staticChannels = await staticRes.json();
+        if (Array.isArray(staticChannels) && staticChannels.length > 0) {
+          const publicChannels = staticChannels
+            .filter((ch: any) => ch.enabled !== false)
+            .sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+          localStorage.setItem(STORAGE_CHANNELS_KEY, JSON.stringify(publicChannels));
+          return publicChannels;
+        }
+      }
+    } catch {
+      // ignore
     }
 
     // Fallback to localStorage or default demo channels

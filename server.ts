@@ -493,7 +493,15 @@ app.get('/api/proxy/stream.m3u8', async (req, res) => {
         });
       }
 
-      // If it is an HLS tag, leave as is
+      // Handle URI="..." in audio/video sub-rendition tracks (#EXT-X-MEDIA)
+      if (trimmed.startsWith('#EXT-X-MEDIA:')) {
+        return trimmed.replace(/URI="([^"]+)"/g, (_, mediaUri) => {
+          const absMediaUri = new URL(mediaUri, finalBaseUrl).toString();
+          return `URI="/api/proxy/stream.m3u8?url=${encodeURIComponent(absMediaUri)}"`;
+        });
+      }
+
+      // If it is any other HLS tag, leave as is
       if (trimmed.startsWith('#')) {
         return line;
       }
@@ -589,12 +597,19 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`ReneeTV Live server running on http://0.0.0.0:${PORT} (${IS_PROD ? 'production' : 'development'})`);
+  // Only bind port if not running in serverless environment
+  if (process.env.VERCEL !== '1') {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`ReneeTV Live server running on http://0.0.0.0:${PORT} (${IS_PROD ? 'production' : 'development'})`);
+    });
+  }
+}
+
+if (process.env.VERCEL !== '1') {
+  startServer().catch((err) => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
   });
 }
 
-startServer().catch((err) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+export default app;
